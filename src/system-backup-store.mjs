@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
+import { lstat, mkdir, readFile, readdir, rename, unlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 
@@ -164,5 +164,53 @@ export class SystemBackupStore {
       if (error.code === "ENOENT") return null;
       throw error;
     }
+  }
+
+  async prune(deviceId, { keep = 30 } = {}) {
+    if (!/^[a-z0-9-]+$/.test(deviceId) || !Number.isInteger(keep) || keep < 1 || keep > 365) {
+      throw new Error("Ungültige Aufbewahrungsregel.");
+    }
+    const directory = join(this.root, deviceId);
+    let names;
+    try {
+      names = await readdir(directory);
+    } catch (error) {
+      if (error.code === "ENOENT") return { kept: 0, removed: 0, preservedInvalid: 0 };
+      throw error;
+    }
+
+    const complete = [];
+    let preservedInvalid = 0;
+    for (const manifestName of names.filter(name => /^\d{8}T\d{6}Z-[a-z0-9-]+\.json$/.test(name))) {
+      try {
+        const manifestPath = join(directory, manifestName);
+        const manifestStat = await lstat(manifestPath);
+        const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+        const archiveName = manifest?.archive?.file;
+        if (!manifestStat.isFile() || manifestStat.isSymbolicLink() || manifest?.format !== "lg-tv-system-backup-v1" || manifest?.device?.id !== deviceId ||
+            typeof archiveName !== "string" || !/^\d{8}T\d{6}Z-[a-z0-9-]+\.tar\.gz$/.test(archiveName)) throw new Error("Ungültiges Manifest.");
+        const archivePath = join(directory, archiveName);
+        const archiveStat = await lstat(archivePath);
+        if (!archiveStat.isFile() || archiveStat.isSymbolicLink()) throw new Error("Ungültige Archivdatei.");
+        const archive = await readFile(archivePath);
+        const sha256 = createHash("sha256").update(archive).digest("hex");
+        if (sha256 !== manifest.archive.sha256) throw new Error("Prüfsumme stimmt nicht.");
+        inspectConfigArchive(archive);
+        complete.push({ manifestName, archiveName, createdAt: manifest.createdAt || manifestName });
+      } catch {
+        preservedInvalid += 1;
+      }
+    }
+
+    complete.sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    const expired = complete.slice(keep);
+    for (const item of expired) {
+      const manifestPath = join(directory, item.manifestName);
+      const markerPath = `${manifestPath}.pruning`;
+      await rename(manifestPath, markerPath);
+      await unlink(join(directory, item.archiveName));
+      await unlink(markerPath);
+    }
+    return { kept: Math.min(complete.length, keep), removed: expired.length, preservedInvalid };
   }
 }

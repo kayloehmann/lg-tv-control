@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -94,6 +95,37 @@ test("system backup is persisted with a verified manifest and restrictive modes"
     const manifest = JSON.parse(await readFile(join(root, "living-room", manifestName), "utf8"));
     assert.equal(manifest.archive.sha256, saved.sha256);
     assert.equal((await store.latest("living-room")).sha256, saved.sha256);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("retention removes only old verified pairs and preserves incomplete data", async () => {
+  const root = await mkdtemp(join(tmpdir(), "lg-tv-retention-"));
+  const directory = join(root, "living-room");
+  const archive = validArchive();
+  const sha256 = createHash("sha256").update(archive).digest("hex");
+  try {
+    await mkdir(directory);
+    for (let index = 1; index <= 3; index += 1) {
+      const stamp = `2026010${index}T010101Z`;
+      const archiveName = `${stamp}-living-room.tar.gz`;
+      const manifest = {
+        format: "lg-tv-system-backup-v1",
+        createdAt: `2026-01-0${index}T01:01:01.000Z`,
+        device: { id: "living-room", model: "TEST", firmware: "1" },
+        archive: { file: archiveName, sha256, sizeBytes: archive.length, files: 3, verified: true }
+      };
+      await writeFile(join(directory, archiveName), archive, { mode: 0o600 });
+      await writeFile(join(directory, `${stamp}-living-room.json`), JSON.stringify(manifest), { mode: 0o600 });
+    }
+    await writeFile(join(directory, "20251231T010101Z-living-room.tar.gz"), archive, { mode: 0o600 });
+    const result = await new SystemBackupStore(root).prune("living-room", { keep: 2 });
+    assert.deepEqual(result, { kept: 2, removed: 1, preservedInvalid: 0 });
+    const names = await readdir(directory);
+    assert.equal(names.some(name => name.startsWith("20260101T010101Z")), false);
+    assert.equal(names.includes("20251231T010101Z-living-room.tar.gz"), true);
+    assert.equal(names.filter(name => name.endsWith(".json")).length, 2);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

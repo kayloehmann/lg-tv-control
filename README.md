@@ -73,6 +73,10 @@ Weitere Funktionen:
 
 Die vollständigen Gerätesicherungen liegen ausschließlich unter `/data/backups/<tv>/` auf der NAS. Sie enthalten webOS-Präferenzen, Homebrew-Konfiguration, Homebrew-Apps und gerätegebundene Schlüssel. Deshalb werden sie nicht an den Browser ausgeliefert und mit Dateimodus `0600` gespeichert. Ein automatischer Voll-Restore ist bewusst nicht vorhanden: Modell und Firmware müssen vor einer manuellen Wiederherstellung geprüft werden.
 
+Der produktive NAS-Host startet `node /app/src/backup-cli.mjs` täglich vor dem bestehenden Hyper-Backup-Lauf. Der CLI-Lauf sichert beide Fernseher unabhängig, validiert SHA-256 und TAR-Inhalt und bewahrt je Gerät die 30 neuesten vollständigen Manifest-/Archivpaare auf. Unvollständige oder beschädigte Paare werden zur Diagnose nicht automatisch entfernt. Der letzte Lauf steht in `/data/backups/last-daily-run.json`.
+
+Auf der NAS ruft `/volume1/docker/lg-tv-control/tools/run-daily-backup.sh` den CLI-Lauf um 22:50 Uhr auf. Erfolg oder Fehler gehen unter dem Tag `lg-tv-backup` ins Systemprotokoll. Die Sicherung weckt ausgeschaltete Fernseher nicht auf; ein nicht erreichbares Gerät führt zu einem sichtbaren Fehlerstatus, ohne die letzte gültige Sicherung zu verändern.
+
 ## Home Assistant
 
 `home-assistant/lg_tv_control.yaml` ist ein isoliertes Home-Assistant-Paket für die bereits vorhandenen webOS-TV-Entitäten und die eingeschränkte Automations-API des Dashboards. Es stellt Status-, Root-, Firmware-Schutz-, Quellen- und Lautstärkesensoren sowie Buttons für Medienprofile und alle aktuellen Favoriten bereit. Die vorhandenen Apple-TV- und Ausschalt-Skripte bleiben erhalten. Der Token liegt nur in Home Assistants `secrets.yaml` und als read-only Secret-Datei im NAS-Container.
