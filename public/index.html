@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>LG TV Control</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">LG</span><span>TV Control</span></div>
+      <nav id="groups" aria-label="Einstellungsgruppen"></nav>
+      <div class="sidebar-note"><span id="sidebar-model">LG webOS TV</span><br><span id="sidebar-version">Live-Informationen werden geladen</span></div>
+    </aside>
+
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">LOCAL CONTROL PLANE</p>
+          <h1>Dein Fernseher.<br><span>Deine Regeln.</span></h1>
+        </div>
+        <div class="header-controls">
+          <label class="device-select-label" for="device-select">Fernseher
+            <select id="device-select" aria-label="Fernseher auswählen"></select>
+          </label>
+          <div id="status" class="status loading"><i></i><span>TV wird geprüft …</span></div>
+        </div>
+      </header>
+
+      <section class="intro">
+        <div><strong id="setting-count">–</strong><span>sicher freigegebene Parameter</span></div>
+        <div><strong>SSH</strong><span>verschlüsselt · Schlüsselzugang</span></div>
+        <div><strong>Allowlist</strong><span>keine freien Systembefehle</span></div>
+      </section>
+
+      <section class="device-panel" aria-labelledby="device-title">
+        <div class="device-heading">
+          <div><p class="eyebrow">GERÄTEINFORMATIONEN</p><h2 id="device-title">Technischer Überblick</h2></div>
+          <span id="device-address" class="address">10.222.0.83</span>
+        </div>
+        <div id="device-info" class="device-grid" aria-live="polite">
+          <div class="skeleton small"></div>
+        </div>
+      </section>
+
+      <section class="control-panel" aria-labelledby="control-title">
+        <div class="control-heading">
+          <div><p class="eyebrow">FERNBEDIENUNG</p><h2 id="control-title">Aktionszentrum</h2></div>
+          <span id="control-current" class="current-app">Live-Status wird geladen</span>
+        </div>
+        <div id="control-content" class="control-content" aria-live="polite"><div class="skeleton small"></div></div>
+      </section>
+
+      <section class="profiles-panel" aria-labelledby="profiles-title">
+        <div class="profiles-heading">
+          <div><p class="eyebrow">SZENEN & PROFILE</p><h2 id="profiles-title">Ein Tastendruck, mehrere Einstellungen</h2></div>
+          <span>Vorschau vor jeder Änderung</span>
+        </div>
+        <div id="profile-list" class="profile-list"><div class="skeleton small"></div></div>
+      </section>
+
+      <section class="maintenance-panel" aria-labelledby="maintenance-title">
+        <div class="maintenance-heading">
+          <div><p class="eyebrow">WARTUNG & BACKUP</p><h2 id="maintenance-title">Gesundheitscheck</h2></div>
+          <button id="maintenance-refresh" type="button">↻ Prüfen</button>
+        </div>
+        <div id="maintenance-info" class="maintenance-grid" aria-live="polite"><div class="skeleton small"></div></div>
+        <div class="backup-actions">
+          <div><strong>Konfigurationsbackup</strong><span id="system-backup-status">Vollständige Gerätekonfiguration sicher auf der NAS ablegen.</span></div>
+          <button id="system-backup-create" type="button">NAS-Sicherung erstellen</button>
+          <button id="backup-download" type="button">JSON-Schnellsicherung</button>
+          <label class="backup-upload">Backup auswählen<input id="backup-file" type="file" accept="application/json,.json"></label>
+        </div>
+      </section>
+
+      <section class="history-panel" aria-labelledby="history-title">
+        <div class="history-heading">
+          <div><p class="eyebrow">SICHERHEITSNETZ</p><h2 id="history-title">Letzte Änderungen</h2></div>
+          <span>Je Fernseher · dauerhaft gespeichert</span>
+        </div>
+        <div id="history-list" class="history-list" aria-live="polite"><div class="skeleton small"></div></div>
+      </section>
+
+      <section class="toolbar">
+        <div>
+          <p class="eyebrow">KONFIGURATION</p>
+          <h2 id="section-title">Alle Einstellungen</h2>
+        </div>
+        <button id="refresh" type="button">↻ Neu laden</button>
+      </section>
+
+      <div id="notice" role="status" aria-live="polite"></div>
+      <section id="settings" class="settings-grid" aria-busy="true"></section>
+
+      <section class="explorer">
+        <div class="explorer-head">
+          <div>
+            <p class="eyebrow">NUR LESEN</p>
+            <h2>Parameter-Explorer</h2>
+            <p>Weitere vom TV gemeldete Werte. Kritische Listen und sensible Felder werden ausgeblendet.</p>
+          </div>
+          <select id="explorer-category" aria-label="Kategorie">
+            <option value="general">Allgemein</option>
+            <option value="network">Netzwerk</option>
+            <option value="time">Zeit & Energie</option>
+            <option value="picture">Bild (aktueller Eingang)</option>
+            <option value="sound">Ton (aktueller Eingang)</option>
+            <option value="option">Optionen</option>
+          </select>
+        </div>
+        <input id="explorer-filter" type="search" placeholder="Parameter filtern …" aria-label="Parameter filtern">
+        <div id="explorer-output" class="parameter-table"></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="profile-dialog" aria-labelledby="profile-dialog-title">
+    <form method="dialog" class="profile-dialog-card">
+      <div class="dialog-head">
+        <div><p class="eyebrow">PROFIL-VORSCHAU</p><h2 id="profile-dialog-title">Profil prüfen</h2></div>
+        <button class="icon-button" value="cancel" aria-label="Dialog schließen">×</button>
+      </div>
+      <p id="profile-dialog-description" class="dialog-description"></p>
+      <div id="profile-changes" class="profile-changes"></div>
+      <p id="profile-note" class="profile-note"></p>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary-button">Abbrechen</button>
+        <button id="apply-profile" value="default" type="button" class="primary-button">Profil anwenden</button>
+      </div>
+    </form>
+  </dialog>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+  - title: Fernseher
+    path: fernseher
+    icon: mdi:television
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Wohnzimmer
+            icon: mdi:sofa
+          - type: entities
+            title: Live-Status
+            show_header_toggle: false
+            entities:
+              - entity: sensor.lg_tv_wohnzimmer_status
+                name: Betriebszustand
+              - entity: sensor.lg_tv_wohnzimmer_aktive_quelle
+                name: Aktive Quelle
+              - entity: sensor.lg_tv_wohnzimmer_lautstarke
+                name: Lautstärke
+              - entity: binary_sensor.lg_tv_wohnzimmer_root
+                name: Root-Zugriff
+              - entity: binary_sensor.lg_tv_wohnzimmer_firmware_schutz
+                name: Firmware-Schutz
+          - type: heading
+            heading: Bild- und Tonprofile
+            icon: mdi:tune-variant
+          - type: tile
+            entity: input_boolean.lg_tv_wohnzimmer_switch_gaming_auto
+            name: Switch → Gaming automatisch
+            icon: mdi:gamepad-variant
+          - type: button
+            entity: button.wohnzimmer_filmabend
+            name: Filmabend
+            show_state: false
+          - type: button
+            entity: button.wohnzimmer_sport
+            name: Sport
+            show_state: false
+          - type: button
+            entity: button.wohnzimmer_nachtmodus
+            name: Nachtmodus
+            show_state: false
+          - type: button
+            entity: button.wohnzimmer_gaming
+            name: Gaming
+            show_state: false
+          - type: heading
+            heading: Favoriten
+            icon: mdi:star
+          - type: button
+            entity: button.wohnzimmer_live_tv
+            name: Live TV
+            show_state: false
+          - type: button
+            entity: button.wohnzimmer_netflix
+            name: Netflix
+            show_state: false
+          - type: button
+            entity: button.wohnzimmer_prime_video
+            name: Prime Video
+            show_state: false
+          - type: button
+            entity: button.wohnzimmer_apple_tv
+            name: Apple TV
+            show_state: false
+          - type: button
+            entity: button.wohnzimmer_nintendo_switch
+            name: Nintendo Switch
+            show_state: false
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Schlafzimmer
+            icon: mdi:bed-king
+          - type: entities
+            title: Live-Status
+            show_header_toggle: false
+            entities:
+              - entity: sensor.lg_tv_schlafzimmer_status
+                name: Betriebszustand
+              - entity: sensor.lg_tv_schlafzimmer_aktive_quelle
+                name: Aktive Quelle
+              - entity: sensor.lg_tv_schlafzimmer_lautstarke
+                name: Lautstärke
+              - entity: binary_sensor.lg_tv_schlafzimmer_root
+                name: Root-Zugriff
+              - entity: binary_sensor.lg_tv_schlafzimmer_firmware_schutz
+                name: Firmware-Schutz
+          - type: heading
+            heading: Bild- und Tonprofile
+            icon: mdi:tune-variant
+          - type: button
+            entity: button.schlafzimmer_filmabend
+            name: Filmabend
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_sport
+            name: Sport
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_nachtmodus
+            name: Nachtmodus
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_gaming
+            name: Gaming
+            show_state: false
+          - type: heading
+            heading: Favoriten
+            icon: mdi:star
+          - type: button
+            entity: button.schlafzimmer_live_tv
+            name: Live TV
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_youtube
+            name: YouTube
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_netflix
+            name: Netflix
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_prime_video
+            name: Prime Video
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_apple
+            name: Apple
+            show_state: false
+          - type: button
+            entity: button.schlafzimmer_apple_tv
+            name: Apple TV
+            show_state: false
+
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Gemeinsame Aktionen
+            icon: mdi:remote-tv
+          - type: button
+            entity: script.lg_tv_alle_ausschalten
+            name: Alle Fernseher ausschalten
+            icon: mdi:television-off
+            show_state: false
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.lg_tv_alle_ausschalten
+              confirmation:
+                text: Wirklich beide Fernseher ausschalten?
+          - type: markdown
+            content: >-
+              Für Einstellungen, Backup und die vollständige Fernbedienung:
+              [LG TV Control](http://10.111.0.104:8090/lg-tv/)

@@ -1,0 +1,12 @@
+.env
+.DS_Store
+node_modules/
+*.log
+*.tar.gz
+data/
+secrets/
+deploy-backups/
+inspect-hbchannel/
+downloads/
+usb-root/
+evidence/

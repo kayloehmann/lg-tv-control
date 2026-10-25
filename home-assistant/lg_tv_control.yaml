@@ -1,0 +1,364 @@
+rest:
+  - resource: "http://10.111.0.104:3083/api/automation/status?device=living-room"
+    headers:
+      Authorization: !secret lg_tv_control_authorization
+    scan_interval: 60
+    timeout: 20
+    sensor:
+      - name: LG TV Wohnzimmer Status
+        unique_id: lg_tv_control_living_room_status
+        icon: mdi:television
+        value_template: "{{ value_json.power_state | default('unavailable') }}"
+        json_attributes:
+          - online
+          - root
+          - updates_blocked
+          - active_source
+          - volume
+          - muted
+          - favorites
+
+  - resource: "http://10.111.0.104:3083/api/automation/status?device=bedroom"
+    headers:
+      Authorization: !secret lg_tv_control_authorization
+    scan_interval: 60
+    timeout: 20
+    sensor:
+      - name: LG TV Schlafzimmer Status
+        unique_id: lg_tv_control_bedroom_status
+        icon: mdi:television
+        value_template: "{{ value_json.power_state | default('unavailable') }}"
+        json_attributes:
+          - online
+          - root
+          - updates_blocked
+          - active_source
+          - volume
+          - muted
+          - favorites
+
+rest_command:
+  lg_tv_control_profile:
+    url: "http://10.111.0.104:3083/api/automation/action?device={{ device }}"
+    method: POST
+    headers:
+      Authorization: !secret lg_tv_control_authorization
+    content_type: application/json
+    payload: >-
+      {"action":"profile","id":{{ profile | tojson }}}
+
+  lg_tv_control_favorite:
+    url: "http://10.111.0.104:3083/api/automation/action?device={{ device }}"
+    method: POST
+    headers:
+      Authorization: !secret lg_tv_control_authorization
+    content_type: application/json
+    payload: >-
+      {"action":"favorite","id":{{ favorite | tojson }}}
+
+input_boolean:
+  lg_tv_wohnzimmer_switch_gaming_auto:
+    name: Switch automatisch auf Gaming-Profil
+    icon: mdi:gamepad-variant
+
+automation:
+  - id: lg_tv_wohnzimmer_switch_gaming_auto
+    alias: LG TV Wohnzimmer - Switch Gaming-Profil
+    description: Aktiviert beim Wechsel auf Nintendo Switch automatisch das Gaming-Profil, sofern der Helfer eingeschaltet ist.
+    mode: restart
+    trigger:
+      - platform: state
+        entity_id: media_player.lg_webos_smart_tv
+        attribute: source
+        to: Nintendo Switch
+    condition:
+      - condition: state
+        entity_id: input_boolean.lg_tv_wohnzimmer_switch_gaming_auto
+        state: "on"
+      - condition: state
+        entity_id: media_player.lg_webos_smart_tv
+        state: "on"
+    action:
+      - delay: "00:00:05"
+      - condition: state
+        entity_id: media_player.lg_webos_smart_tv
+        state: "on"
+      - condition: template
+        value_template: "{{ state_attr('media_player.lg_webos_smart_tv', 'source') == 'Nintendo Switch' }}"
+      - action: rest_command.lg_tv_control_profile
+        data:
+          device: living-room
+          profile: gaming
+
+  - id: lg_tv_control_health_warning
+    alias: LG TV - Schutzstatus-Warnung
+    description: Warnt intern, wenn Root oder Firmware-Schutz eines TVs länger als fünf Minuten nicht aktiv ist.
+    mode: parallel
+    max: 4
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.lg_tv_wohnzimmer_root
+          - binary_sensor.lg_tv_wohnzimmer_firmware_schutz
+          - binary_sensor.lg_tv_schlafzimmer_root
+          - binary_sensor.lg_tv_schlafzimmer_firmware_schutz
+        to: "off"
+        for: "00:05:00"
+      - platform: state
+        entity_id:
+          - binary_sensor.lg_tv_wohnzimmer_root
+          - binary_sensor.lg_tv_wohnzimmer_firmware_schutz
+          - binary_sensor.lg_tv_schlafzimmer_root
+          - binary_sensor.lg_tv_schlafzimmer_firmware_schutz
+        to: unavailable
+        for: "00:05:00"
+      - platform: state
+        entity_id:
+          - binary_sensor.lg_tv_wohnzimmer_root
+          - binary_sensor.lg_tv_wohnzimmer_firmware_schutz
+          - binary_sensor.lg_tv_schlafzimmer_root
+          - binary_sensor.lg_tv_schlafzimmer_firmware_schutz
+        to: unknown
+        for: "00:05:00"
+    action:
+      - action: persistent_notification.create
+        data:
+          notification_id: "lg_tv_control_{{ trigger.entity_id | replace('.', '_') }}"
+          title: LG-TV-Schutzstatus prüfen
+          message: >-
+            {{ state_attr(trigger.entity_id, 'friendly_name') or trigger.entity_id }}
+            ist seit mindestens fünf Minuten {{ trigger.to_state.state }}.
+            Bitte TV-Erreichbarkeit, Root und Firmware-Schutz prüfen.
+
+  - id: lg_tv_control_health_recovered
+    alias: LG TV - Schutzstatus wiederhergestellt
+    description: Entfernt die interne Warnung automatisch, sobald der Schutzstatus wieder aktiv ist.
+    mode: parallel
+    max: 4
+    trigger:
+      - platform: state
+        entity_id:
+          - binary_sensor.lg_tv_wohnzimmer_root
+          - binary_sensor.lg_tv_wohnzimmer_firmware_schutz
+          - binary_sensor.lg_tv_schlafzimmer_root
+          - binary_sensor.lg_tv_schlafzimmer_firmware_schutz
+        to: "on"
+        for: "00:01:00"
+    action:
+      - action: persistent_notification.dismiss
+        data:
+          notification_id: "lg_tv_control_{{ trigger.entity_id | replace('.', '_') }}"
+
+template:
+  - binary_sensor:
+      - name: LG TV Wohnzimmer Root
+        unique_id: lg_tv_control_living_room_root
+        device_class: connectivity
+        icon: mdi:shield-key
+        availability: "{{ states('sensor.lg_tv_wohnzimmer_status') not in ['unknown', 'unavailable'] }}"
+        state: "{{ state_attr('sensor.lg_tv_wohnzimmer_status', 'root') | default(false, true) }}"
+      - name: LG TV Wohnzimmer Firmware-Schutz
+        unique_id: lg_tv_control_living_room_updates_blocked
+        device_class: safety
+        icon: mdi:update-lock
+        availability: "{{ states('sensor.lg_tv_wohnzimmer_status') not in ['unknown', 'unavailable'] }}"
+        state: "{{ state_attr('sensor.lg_tv_wohnzimmer_status', 'updates_blocked') | default(false, true) }}"
+      - name: LG TV Schlafzimmer Root
+        unique_id: lg_tv_control_bedroom_root
+        device_class: connectivity
+        icon: mdi:shield-key
+        availability: "{{ states('sensor.lg_tv_schlafzimmer_status') not in ['unknown', 'unavailable'] }}"
+        state: "{{ state_attr('sensor.lg_tv_schlafzimmer_status', 'root') | default(false, true) }}"
+      - name: LG TV Schlafzimmer Firmware-Schutz
+        unique_id: lg_tv_control_bedroom_updates_blocked
+        device_class: safety
+        icon: mdi:update-lock
+        availability: "{{ states('sensor.lg_tv_schlafzimmer_status') not in ['unknown', 'unavailable'] }}"
+        state: "{{ state_attr('sensor.lg_tv_schlafzimmer_status', 'updates_blocked') | default(false, true) }}"
+
+  - sensor:
+      - name: LG TV Wohnzimmer Aktive Quelle
+        unique_id: lg_tv_control_living_room_active_source
+        icon: mdi:video-input-hdmi
+        availability: "{{ states('sensor.lg_tv_wohnzimmer_status') not in ['unknown', 'unavailable'] }}"
+        state: "{{ state_attr('sensor.lg_tv_wohnzimmer_status', 'active_source') | default('Unbekannt', true) }}"
+      - name: LG TV Wohnzimmer Lautstärke
+        unique_id: lg_tv_control_living_room_volume
+        icon: mdi:volume-high
+        unit_of_measurement: "%"
+        availability: "{{ state_attr('sensor.lg_tv_wohnzimmer_status', 'volume') is number }}"
+        state: "{{ state_attr('sensor.lg_tv_wohnzimmer_status', 'volume') }}"
+      - name: LG TV Schlafzimmer Aktive Quelle
+        unique_id: lg_tv_control_bedroom_active_source
+        icon: mdi:video-input-hdmi
+        availability: "{{ states('sensor.lg_tv_schlafzimmer_status') not in ['unknown', 'unavailable'] }}"
+        state: "{{ state_attr('sensor.lg_tv_schlafzimmer_status', 'active_source') | default('Unbekannt', true) }}"
+      - name: LG TV Schlafzimmer Lautstärke
+        unique_id: lg_tv_control_bedroom_volume
+        icon: mdi:volume-high
+        unit_of_measurement: "%"
+        availability: "{{ state_attr('sensor.lg_tv_schlafzimmer_status', 'volume') is number }}"
+        state: "{{ state_attr('sensor.lg_tv_schlafzimmer_status', 'volume') }}"
+
+  - button:
+      - name: Wohnzimmer Filmabend
+        unique_id: lg_tv_control_living_room_movie_night
+        icon: mdi:movie-open
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: living-room, profile: movie-night }
+      - name: Wohnzimmer Sport
+        unique_id: lg_tv_control_living_room_sports
+        icon: mdi:soccer
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: living-room, profile: sports }
+      - name: Wohnzimmer Nachtmodus
+        unique_id: lg_tv_control_living_room_night
+        icon: mdi:weather-night
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: living-room, profile: night }
+      - name: Wohnzimmer Gaming
+        unique_id: lg_tv_control_living_room_gaming
+        icon: mdi:gamepad-variant
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: living-room, profile: gaming }
+      - name: Schlafzimmer Filmabend
+        unique_id: lg_tv_control_bedroom_movie_night
+        icon: mdi:movie-open
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: bedroom, profile: movie-night }
+      - name: Schlafzimmer Sport
+        unique_id: lg_tv_control_bedroom_sports
+        icon: mdi:soccer
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: bedroom, profile: sports }
+      - name: Schlafzimmer Nachtmodus
+        unique_id: lg_tv_control_bedroom_night
+        icon: mdi:weather-night
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: bedroom, profile: night }
+      - name: Schlafzimmer Gaming
+        unique_id: lg_tv_control_bedroom_gaming
+        icon: mdi:gamepad-variant
+        press:
+          - action: rest_command.lg_tv_control_profile
+            data: { device: bedroom, profile: gaming }
+
+      - name: Wohnzimmer Live TV
+        unique_id: lg_tv_control_living_room_live_tv
+        icon: mdi:television-classic
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: living-room, favorite: "app:com.webos.app.livetv" }
+      - name: Wohnzimmer Netflix
+        unique_id: lg_tv_control_living_room_netflix
+        icon: mdi:netflix
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: living-room, favorite: "app:netflix" }
+      - name: Wohnzimmer Prime Video
+        unique_id: lg_tv_control_living_room_prime_video
+        icon: mdi:amazon
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: living-room, favorite: "app:amazon" }
+      - name: Wohnzimmer Nintendo Switch
+        unique_id: lg_tv_control_living_room_nintendo_switch
+        icon: mdi:nintendo-switch
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: living-room, favorite: "input:HDMI_4" }
+      - name: Wohnzimmer Apple TV
+        unique_id: lg_tv_control_living_room_apple_tv_favorite
+        icon: mdi:apple
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: living-room, favorite: "input:HDMI_2" }
+
+      - name: Schlafzimmer Live TV
+        unique_id: lg_tv_control_bedroom_live_tv
+        icon: mdi:television-classic
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: bedroom, favorite: "app:com.webos.app.livetv" }
+      - name: Schlafzimmer YouTube
+        unique_id: lg_tv_control_bedroom_youtube
+        icon: mdi:youtube
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: bedroom, favorite: "app:youtube.leanback.v4" }
+      - name: Schlafzimmer Netflix
+        unique_id: lg_tv_control_bedroom_netflix
+        icon: mdi:netflix
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: bedroom, favorite: "app:netflix" }
+      - name: Schlafzimmer Prime Video
+        unique_id: lg_tv_control_bedroom_prime_video
+        icon: mdi:amazon
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: bedroom, favorite: "app:amazon" }
+      - name: Schlafzimmer Apple
+        unique_id: lg_tv_control_bedroom_hdmi_1
+        icon: mdi:video-input-hdmi
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: bedroom, favorite: "input:HDMI_1" }
+      - name: Schlafzimmer Apple TV
+        unique_id: lg_tv_control_bedroom_apple_tv_favorite
+        icon: mdi:apple
+        press:
+          - action: rest_command.lg_tv_control_favorite
+            data: { device: bedroom, favorite: "input:HDMI_3" }
+
+script:
+  lg_tv_wohnzimmer_apple_tv:
+    alias: Wohnzimmer TV - Apple TV
+    description: Schaltet den Wohnzimmer-TV ein und öffnet den Apple-TV-Eingang.
+    icon: mdi:apple
+    mode: single
+    sequence:
+      - action: media_player.turn_on
+        target:
+          entity_id: media_player.lg_webos_smart_tv
+      - delay: "00:00:03"
+      - action: media_player.select_source
+        target:
+          entity_id: media_player.lg_webos_smart_tv
+        data:
+          source: Apple TV
+
+  lg_tv_schlafzimmer_apple_tv:
+    alias: Schlafzimmer TV - Apple TV
+    description: Schaltet den Schlafzimmer-TV ein und öffnet Apple TV.
+    icon: mdi:apple
+    mode: single
+    sequence:
+      - action: media_player.turn_on
+        target:
+          entity_id: media_player.fernseher_schlafzimmer
+      - delay: "00:00:03"
+      - action: media_player.select_source
+        target:
+          entity_id: media_player.fernseher_schlafzimmer
+        data:
+          source: Apple TV
+
+  lg_tv_alle_ausschalten:
+    alias: Alle Fernseher ausschalten
+    description: Schaltet Wohnzimmer- und Schlafzimmer-TV gemeinsam aus.
+    icon: mdi:television-off
+    mode: single
+    sequence:
+      - action: media_player.turn_off
+        target:
+          entity_id:
+            - media_player.lg_webos_smart_tv
+            - media_player.fernseher_schlafzimmer

@@ -1,0 +1,16 @@
+.git
+.env
+.DS_Store
+node_modules
+test
+home-assistant
+tools
+evidence
+downloads
+usb-root
+inspect-hbchannel
+data
+secrets
+deploy-backups
+*.log
+*.tar.gz
