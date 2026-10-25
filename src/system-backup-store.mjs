@@ -26,18 +26,43 @@ export function inspectConfigArchive(archive) {
   if (!Buffer.isBuffer(archive) || archive.length < 64) throw new Error("Das TV-Archiv ist leer oder ungültig.");
   const tar = gunzipSync(archive, { maxOutputLength: 96 * 1024 * 1024 });
   const entries = [];
+  let longName = null;
+  let longLink = null;
   for (let offset = 0; offset + 512 <= tar.length;) {
     const block = tar.subarray(offset, offset + 512);
     if (block.every(byte => byte === 0)) break;
     const prefix = tarString(block, 345, 155);
-    const name = `${prefix}${prefix ? "/" : ""}${tarString(block, 0, 100)}`.replace(/^\.\//, "");
     const size = tarNumber(block, 124, 12);
-    if (!name || !Number.isSafeInteger(size) || size < 0) throw new Error("Das TV-Archiv enthält einen ungültigen TAR-Eintrag.");
+    const type = String.fromCharCode(block[156] || 48);
+    if (!Number.isSafeInteger(size) || size < 0) throw new Error("Das TV-Archiv enthält einen ungültigen TAR-Eintrag.");
+    const dataStart = offset + 512;
+    const data = tar.subarray(dataStart, dataStart + size);
+    const rawName = `${prefix}${prefix ? "/" : ""}${tarString(block, 0, 100)}`;
+    if (rawName === "././@LongLink" && (type === "L" || type === "K")) {
+      const nullIndex = data.indexOf(0);
+      const value = data.subarray(0, nullIndex >= 0 ? nullIndex : data.length).toString("utf8");
+      if (!value) throw new Error("Das TV-Archiv enthält ungültige LongLink-Metadaten.");
+      if (type === "L") longName = value;
+      else longLink = value;
+      offset += 512 + Math.ceil(size / 512) * 512;
+      continue;
+    }
+    const name = (longName || rawName).replace(/^\.\//, "");
+    const linkName = longLink || tarString(block, 157, 100);
+    longName = null;
+    longLink = null;
+    if (!name || !["0", "5", "2"].includes(type)) throw new Error("Das TV-Archiv enthält einen nicht unterstützten TAR-Eintrag.");
     if (name.startsWith("/") || name.split("/").includes("..") || !allowedRoots.some(root => name === root.slice(0, -1) || name.startsWith(root))) {
       throw new Error("Das TV-Archiv enthält einen nicht freigegebenen Pfad.");
     }
-    entries.push({ name, size });
+    if (type === "2" && (!linkName || linkName.includes("\0"))) throw new Error("Das TV-Archiv enthält einen ungültigen symbolischen Link.");
+    entries.push({ name, size, type, ...(type === "2" ? { linkName } : {}) });
     offset += 512 + Math.ceil(size / 512) * 512;
+  }
+  if (longName || longLink) throw new Error("Das TV-Archiv enthält unvollständige LongLink-Metadaten.");
+  const symlinks = entries.filter(entry => entry.type === "2").map(entry => entry.name.replace(/\/$/, ""));
+  if (entries.some(entry => symlinks.some(link => entry.name !== link && entry.name.startsWith(`${link}/`)))) {
+    throw new Error("Das TV-Archiv schreibt durch einen symbolischen Link.");
   }
   if (!entries.some(entry => entry.name.startsWith("var/luna/preferences/")) || !entries.some(entry => entry.name.startsWith("var/lib/webosbrew/"))) {
     throw new Error("Das TV-Archiv enthält nicht alle erforderlichen Konfigurationsbereiche.");
