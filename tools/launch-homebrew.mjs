@@ -1,4 +1,4 @@
-const tv = "10.222.0.83";
+const tv = process.env.TV_HOST || "192.168.1.50";
 const socket = new WebSocket(`ws://${tv}:3000`);
 
 const timeout = setTimeout(() => {
@@ -20,7 +20,7 @@ socket.addEventListener("open", () => {
           appId: "dev.codex.lgroot",
           vendorId: "dev.codex",
           localizedAppNames: { "": "LG Root Setup" },
-          localizedVendorNames: { "": "Kay" },
+          localizedVendorNames: { "": "Local administrator" },
           permissions: ["LAUNCH", "READ_INSTALLED_APPS"]
         },
         permissions: ["LAUNCH", "READ_INSTALLED_APPS"]

@@ -13,7 +13,8 @@ if [ "$actual" != "$expected" ]; then
   exit 1
 fi
 
-sed 's#href="http://10.111.0.104:3083/"#href="/lg-tv/"#' "$dashboard" > "$staging"
+dashboard_url="${LG_TV_DASHBOARD_URL:-http://192.168.1.10:3083/}"
+sed "s#href=\"${dashboard_url}\"#href=\"/lg-tv/\"#" "$dashboard" > "$staging"
 test "$(grep -o 'href="/lg-tv/"' "$staging" | wc -l | tr -d ' ')" = 1
 
 sudo -n install -m 0644 "$dashboard" "$backup"

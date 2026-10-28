@@ -7,7 +7,7 @@ export function wakePacket(mac) {
   return Buffer.concat([Buffer.alloc(6, 0xff), ...Array.from({ length: 16 }, () => address)]);
 }
 
-export function sendWakeOnLan(mac, broadcast = "10.222.0.255", port = 9) {
+export function sendWakeOnLan(mac, broadcast = "192.168.1.255", port = 9) {
   const packet = wakePacket(mac);
   return new Promise((resolve, reject) => {
     const socket = createSocket("udp4");

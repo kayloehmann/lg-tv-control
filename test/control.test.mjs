@@ -33,9 +33,9 @@ test("remote control exposes only fixed safe button identifiers", () => {
 });
 
 test("wake-on-lan packet has the standard 102-byte shape", () => {
-  const packet = wakePacket("78:5d:c8:99:06:8b");
+  const packet = wakePacket("02:00:00:00:00:50");
   assert.equal(packet.length, 102);
   assert.equal(packet.subarray(0, 6).toString("hex"), "ffffffffffff");
-  assert.equal(packet.subarray(6, 12).toString("hex"), "785dc899068b");
+  assert.equal(packet.subarray(6, 12).toString("hex"), "020000000050");
   assert.throws(() => wakePacket("not-a-mac"));
 });

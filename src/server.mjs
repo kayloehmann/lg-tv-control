@@ -39,8 +39,8 @@ const commonTvConfig = {
   knownHostsPath: process.env.TV_KNOWN_HOSTS_PATH || "/run/secrets/known_hosts"
 };
 const deviceDefinitions = [
-  { id: "living-room", label: "Wohnzimmer", host: process.env.TV_HOST || "10.222.0.83", mac: process.env.TV_MAC || "78:5d:c8:99:06:8b" },
-  { id: "bedroom", label: "Schlafzimmer", host: process.env.BEDROOM_TV_HOST || "10.222.0.96", mac: process.env.BEDROOM_TV_MAC || "20:17:42:55:98:53" }
+  { id: "living-room", label: "Wohnzimmer", host: process.env.TV_HOST || "192.168.1.50", mac: process.env.TV_MAC || "02:00:00:00:00:50" },
+  { id: "bedroom", label: "Schlafzimmer", host: process.env.BEDROOM_TV_HOST || "192.168.1.51", mac: process.env.BEDROOM_TV_MAC || "02:00:00:00:00:51" }
 ];
 const tvClients = new Map(deviceDefinitions.map(device => [device.id, new TvClient({ ...commonTvConfig, host: device.host })]));
 
@@ -440,7 +440,7 @@ async function api(request, response, url) {
       let result = { ok: true };
 
       if (action === "wake") {
-        await sendWakeOnLan(device.mac, process.env.WOL_BROADCAST || "10.222.0.255");
+        await sendWakeOnLan(device.mac, process.env.WOL_BROADCAST || "192.168.1.255");
       } else if (action === "launch") {
         if (typeof body.id !== "string" || !safeAppById.has(body.id)) return json(response, 400, { error: "App ist nicht freigegeben." });
         const view = controlView(await tv.controlState());

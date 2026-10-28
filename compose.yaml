@@ -14,10 +14,11 @@ services:
       TV_SSH_KEY_PATH: /run/secrets/tv_ssh_key
       TV_KNOWN_HOSTS_PATH: /run/secrets/known_hosts
       AUTOMATION_TOKEN_PATH: /run/secrets/lg_tv_ha_token
-      BEDROOM_TV_HOST: 10.222.0.96
-      TV_MAC: 78:5d:c8:99:06:8b
-      BEDROOM_TV_MAC: 20:17:42:55:98:53
-      WOL_BROADCAST: 10.222.0.255
+      TV_HOST: ${TV_HOST}
+      BEDROOM_TV_HOST: ${BEDROOM_TV_HOST}
+      TV_MAC: ${TV_MAC}
+      BEDROOM_TV_MAC: ${BEDROOM_TV_MAC}
+      WOL_BROADCAST: ${WOL_BROADCAST}
       HISTORY_PATH: /data/history.json
       SYSTEM_BACKUP_DIR: /data/backups
     volumes:

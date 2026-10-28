@@ -271,7 +271,7 @@ export class TvClient {
   }
 
   powerOff() {
-    return this.lunaUri("luna://com.webos.service.tvpower/power/powerOff", {});
+    return this.lunaUri("luna://com.webos.service.tvpower/power/powerOff", { reason: "remoteKey" });
   }
 
   reboot() {

@@ -12,8 +12,8 @@ const commonTvConfig = {
   knownHostsPath: process.env.TV_KNOWN_HOSTS_PATH || "/run/secrets/known_hosts"
 };
 const devices = [
-  { id: "living-room", label: "Wohnzimmer", host: process.env.TV_HOST || "10.222.0.83" },
-  { id: "bedroom", label: "Schlafzimmer", host: process.env.BEDROOM_TV_HOST || "10.222.0.96" }
+  { id: "living-room", label: "Wohnzimmer", host: process.env.TV_HOST || "192.168.1.50" },
+  { id: "bedroom", label: "Schlafzimmer", host: process.env.BEDROOM_TV_HOST || "192.168.1.51" }
 ];
 const preferences = new PreferencesStore(process.env.PREFERENCES_PATH || "/data/preferences.json");
 const backups = new SystemBackupStore(backupRoot);

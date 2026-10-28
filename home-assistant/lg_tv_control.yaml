@@ -1,5 +1,5 @@
 rest:
-  - resource: "http://10.111.0.104:3083/api/automation/status?device=living-room"
+  - resource: "http://192.168.1.10:3083/api/automation/status?device=living-room"
     headers:
       Authorization: !secret lg_tv_control_authorization
     scan_interval: 60
@@ -18,7 +18,7 @@ rest:
           - muted
           - favorites
 
-  - resource: "http://10.111.0.104:3083/api/automation/status?device=bedroom"
+  - resource: "http://192.168.1.10:3083/api/automation/status?device=bedroom"
     headers:
       Authorization: !secret lg_tv_control_authorization
     scan_interval: 60
@@ -39,7 +39,7 @@ rest:
 
 rest_command:
   lg_tv_control_profile:
-    url: "http://10.111.0.104:3083/api/automation/action?device={{ device }}"
+    url: "http://192.168.1.10:3083/api/automation/action?device={{ device }}"
     method: POST
     headers:
       Authorization: !secret lg_tv_control_authorization
@@ -48,7 +48,7 @@ rest_command:
       {"action":"profile","id":{{ profile | tojson }}}
 
   lg_tv_control_favorite:
-    url: "http://10.111.0.104:3083/api/automation/action?device={{ device }}"
+    url: "http://192.168.1.10:3083/api/automation/action?device={{ device }}"
     method: POST
     headers:
       Authorization: !secret lg_tv_control_authorization

@@ -157,4 +157,4 @@
           - type: markdown
             content: >-
               Für Einstellungen, Backup und die vollständige Fernbedienung:
-              [LG TV Control](http://10.111.0.104:8090/lg-tv/)
+              [LG TV Control](http://192.168.1.10:8090/lg-tv/)

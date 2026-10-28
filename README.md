@@ -1,6 +1,17 @@
 # LG TV Control
 
-Lokales NAS-Dashboard für einen gerooteten LG 55SK7900PLA. Das Backend verbindet sich per SSH mit dem TV und nutzt dessen Luna Settings Service. Der Root-Schlüssel wird niemals an den Browser übertragen.
+Lokales NAS-Dashboard für gerootete LG-webOS-Fernseher. Das Backend verbindet sich per SSH mit dem TV und nutzt dessen Luna Settings Service. Der Root-Schlüssel wird niemals an den Browser übertragen.
+
+Das Projekt ist unter der [MIT-Lizenz](LICENSE) veröffentlicht. Pull Requests und nachvollziehbare Ergebnisse weiterer Modell-/Firmwarekombinationen sind willkommen. Rooting und Systemänderungen erfolgen auf eigene Verantwortung; prüfe die Kompatibilität für dein konkretes Gerät, bevor du Befehle ausführst.
+
+Getestet wurde der Betrieb mit:
+
+| Gerät | Firmware | webOS | Besonderheit |
+| --- | --- | --- | --- |
+| LG 55SK7900PLA | `06.10.65` | 3.x | Homebrew-Autostart benötigt auf dem Testgerät den dokumentierten EIM-Fallback |
+| LG 43UM74507LA | `05.40.97` | 4.5 / SDK `4.10.0` | Homebrew-Activity startet automatisch, SSH kann erst nach etwa 60–90 Sekunden verfügbar sein |
+
+Die vollständige, reproduzierbare Vorgehensweise für Root-Zugang, SSH-Härtung, Autostart-Diagnose, Legacy-Fallback, Verifikation und Rollback steht in [docs/ROOTING-AND-AUTOSTART.md](docs/ROOTING-AND-AUTOSTART.md). Die Anleitung ersetzt keine modell- und firmwarebezogene Kompatibilitätsprüfung.
 
 ## Sicherheitsmodell
 
@@ -19,10 +30,10 @@ Das Dashboard sollte nur über das interne LAN oder einen bestehenden VPN-Zugang
 ## Lokaler Test
 
 ```sh
-export TV_HOST=10.222.0.83
+export TV_HOST=192.168.1.50
 export TV_SSH_KEY_PATH="$HOME/.ssh/id_ed25519"
 export TV_KNOWN_HOSTS_PATH="$HOME/.ssh/known_hosts"
-export DASHBOARD_USERNAME=kay
+export DASHBOARD_USERNAME=admin
 export DASHBOARD_PASSWORD='mindestens-12-zeichen'
 npm test
 npm start
@@ -30,14 +41,28 @@ npm start
 
 Danach `http://localhost:3000` öffnen.
 
+## Homebrew-Autostart prüfen
+
+Das Diagnosewerkzeug verändert den Fernseher nicht:
+
+```sh
+TV_HOST=192.0.2.10 \
+TV_SSH_KEY_PATH="$HOME/.ssh/lg-tv-root" \
+TV_KNOWN_HOSTS_PATH="$HOME/.ssh/known_hosts" \
+./tools/diagnose-homebrew-autostart.sh
+```
+
+Den Legacy-Fallback nicht vorsorglich installieren. Er ist nur für Geräte gedacht, bei denen webOS bereits erreichbar ist, Homebrew/SSH nach einem echten Neustart aber dauerhaft nicht automatisch startet. Details und Sicherheitsabfragen stehen in der ausführlichen Anleitung.
+
 ## Synology-Deployment
 
 1. Einen eigenen Ordner anlegen, zum Beispiel `/volume1/docker/lg-tv-control/`.
 2. Projektdateien dorthin kopieren.
 3. Unter `secrets/` einen dedizierten SSH-Schlüssel und eine `known_hosts`-Datei ablegen.
-4. `.env.example` als `.env` kopieren und insbesondere ein langes Dashboard-Passwort setzen.
-5. Sicherstellen, dass der NAS den TV auf `10.222.0.83:22` erreichen darf.
-6. Starten:
+4. Für die Home-Assistant-Bridge einen separaten Token erzeugen: `mkdir -p secrets && openssl rand -hex 32 > secrets/lg_tv_ha_token`.
+5. `.env.example` als `.env` kopieren, die Beispiel-IP-/MAC-Adressen ersetzen und insbesondere ein langes Dashboard-Passwort setzen.
+6. Sicherstellen, dass der NAS den TV auf `TV_HOST:22` erreichen darf.
+7. Starten:
 
 ```sh
 docker compose up -d --build
