@@ -10,7 +10,9 @@ export class PreferencesStore {
   async readAll() {
     try {
       const value = JSON.parse(await readFile(this.path, "utf8"));
-      return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+      return value && typeof value === "object" && !Array.isArray(value)
+        ? value
+        : {};
     } catch (error) {
       if (error.code === "ENOENT") return {};
       throw error;
@@ -21,7 +23,10 @@ export class PreferencesStore {
     await this.queue;
     const all = await this.readAll();
     const favorites = all[device]?.favorites;
-    return { favorites: Array.isArray(favorites) ? favorites : [], configured: Array.isArray(favorites) };
+    return {
+      favorites: Array.isArray(favorites) ? favorites : [],
+      configured: Array.isArray(favorites),
+    };
   }
 
   setFavorites(device, favorites) {
@@ -30,7 +35,9 @@ export class PreferencesStore {
       all[device] = { ...(all[device] || {}), favorites };
       await mkdir(dirname(this.path), { recursive: true });
       const temporary = `${this.path}.${process.pid}.tmp`;
-      await writeFile(temporary, `${JSON.stringify(all, null, 2)}\n`, { mode: 0o600 });
+      await writeFile(temporary, `${JSON.stringify(all, null, 2)}\n`, {
+        mode: 0o600,
+      });
       await rename(temporary, this.path);
       return { favorites };
     };

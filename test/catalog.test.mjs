@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { displayValue, encodedValue, settingById, validateValue } from "../src/settings-catalog.mjs";
+import {
+  displayValue,
+  encodedValue,
+  settingById,
+  validateValue,
+} from "../src/settings-catalog.mjs";
 import { profilesCatalog } from "../src/profiles.mjs";
 
 test("allowlist accepts only enumerated values with matching types", () => {
@@ -12,8 +17,14 @@ test("allowlist accepts only enumerated values with matching types", () => {
 
 test("personal recommendation is decoded and encoded safely", () => {
   const setting = settingById.get("general.personalRecommend");
-  assert.equal(displayValue(setting, { changedByUser: false, value: "on" }), "on");
-  assert.deepEqual(encodedValue(setting, "off"), { changedByUser: true, value: "off" });
+  assert.equal(
+    displayValue(setting, { changedByUser: false, value: "on" }),
+    "on",
+  );
+  assert.deepEqual(encodedValue(setting, "off"), {
+    changedByUser: true,
+    value: "off",
+  });
 });
 
 test("profiles contain only valid allowlisted targets and leave network control untouched", () => {
@@ -29,13 +40,21 @@ test("profiles contain only valid allowlisted targets and leave network control 
 });
 
 test("energy profile preserves remote access and normal viewing", () => {
-  const profile = profilesCatalog.find(candidate => candidate.id === "energy-safe");
+  const profile = profilesCatalog.find(
+    (candidate) => candidate.id === "energy-safe",
+  );
   assert.ok(profile);
   assert.deepEqual(profile.targets, [
     { id: "time.autoOff15Min", value: "on" },
     { id: "time.noSignalAutoOff", value: "on" },
-    { id: "option.quickStartMode", value: "off" }
+    { id: "option.quickStartMode", value: "off" },
   ]);
-  assert.equal(profile.targets.some(target => target.id === "time.noOperationAutoOff"), false);
-  assert.equal(profile.targets.some(target => target.id.startsWith("network.")), false);
+  assert.equal(
+    profile.targets.some((target) => target.id === "time.noOperationAutoOff"),
+    false,
+  );
+  assert.equal(
+    profile.targets.some((target) => target.id.startsWith("network.")),
+    false,
+  );
 });

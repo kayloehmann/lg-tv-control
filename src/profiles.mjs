@@ -4,7 +4,8 @@ export const profilesCatalog = [
   {
     id: "privacy",
     label: "Privatsphäre",
-    description: "Reduziert Werbung, Personalisierung und die Erfassung des Sehverhaltens.",
+    description:
+      "Reduziert Werbung, Personalisierung und die Erfassung des Sehverhaltens.",
     note: "Netzwerksteuerung, Home Assistant, Wake-on-LAN und Sprachfunktionen bleiben unverändert.",
     targets: [
       { id: "general.homePromotion", value: "off" },
@@ -12,19 +13,20 @@ export const profilesCatalog = [
       { id: "general.personalRecommend", value: "off" },
       { id: "general.customizedAd", value: "off" },
       { id: "option.livePlus", value: "off" },
-      { id: "option.watchedListCollection", value: "off" }
-    ]
+      { id: "option.watchedListCollection", value: "off" },
+    ],
   },
   {
     id: "energy-safe",
     label: "Energiesparen",
-    description: "Reduziert unnötigen Standby-Verbrauch und schaltet bei fehlendem Signal automatisch ab.",
+    description:
+      "Reduziert unnötigen Standby-Verbrauch und schaltet bei fehlendem Signal automatisch ab.",
     note: "Wake-on-LAN, LG Connect, Home Assistant und die Abschaltung während normaler Nutzung bleiben unverändert. Quick Start+ benötigt nach einer Änderung einen TV-Neustart.",
     targets: [
       { id: "time.autoOff15Min", value: "on" },
       { id: "time.noSignalAutoOff", value: "on" },
-      { id: "option.quickStartMode", value: "off" }
-    ]
+      { id: "option.quickStartMode", value: "off" },
+    ],
   },
   {
     id: "movie-night",
@@ -33,18 +35,19 @@ export const profilesCatalog = [
     note: "Wirkt nur auf den aktuell aktiven Eingang und lässt Apps, Lautstärke und Netzwerk unverändert.",
     targets: [
       { id: "picture.pictureMode", value: "cinema" },
-      { id: "sound.soundMode", value: "movie" }
-    ]
+      { id: "sound.soundMode", value: "movie" },
+    ],
   },
   {
     id: "sports",
     label: "Sport",
-    description: "Aktiviert die Sportprofile für Bild und Ton des aktuellen Eingangs.",
+    description:
+      "Aktiviert die Sportprofile für Bild und Ton des aktuellen Eingangs.",
     note: "Wirkt nur auf den aktuell aktiven Eingang. Das Profil kann über den Änderungsverlauf rückgängig gemacht werden.",
     targets: [
       { id: "picture.pictureMode", value: "sports" },
-      { id: "sound.soundMode", value: "sports" }
-    ]
+      { id: "sound.soundMode", value: "sports" },
+    ],
   },
   {
     id: "night",
@@ -53,19 +56,20 @@ export const profilesCatalog = [
     note: "Die Lautstärke wird nicht automatisch verändert. Clear Voice bleibt separat steuerbar.",
     targets: [
       { id: "picture.pictureMode", value: "cinema" },
-      { id: "sound.soundMode", value: "news" }
-    ]
+      { id: "sound.soundMode", value: "news" },
+    ],
   },
   {
     id: "gaming",
     label: "Gaming",
-    description: "Schaltet Bild und Ton des aktuellen Eingangs in den Spielmodus.",
+    description:
+      "Schaltet Bild und Ton des aktuellen Eingangs in den Spielmodus.",
     note: "Das Dashboard ändert keine HDMI-Bezeichnung und keinen Eingang automatisch.",
     targets: [
       { id: "picture.pictureMode", value: "game" },
-      { id: "sound.soundMode", value: "game" }
-    ]
-  }
+      { id: "sound.soundMode", value: "game" },
+    ],
+  },
 ];
 
 for (const profile of profilesCatalog) {
@@ -77,4 +81,6 @@ for (const profile of profilesCatalog) {
   }
 }
 
-export const profileById = new Map(profilesCatalog.map(profile => [profile.id, profile]));
+export const profileById = new Map(
+  profilesCatalog.map((profile) => [profile.id, profile]),
+);

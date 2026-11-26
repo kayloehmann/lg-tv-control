@@ -14,10 +14,15 @@ const safeApps = [
   ["de.sky.skyonline", "WOW", "W"],
   ["de.telekom.magentasport", "MagentaSport", "MS"],
   ["de.sdtv.tvapp", "Sportdeutschland.TV", "SD"],
-  ["org.webosbrew.hbchannel", "Homebrew Channel", "HB"]
-].map(([id, label, badge, alwaysAvailable = false]) => ({ id, label, badge, alwaysAvailable }));
+  ["org.webosbrew.hbchannel", "Homebrew Channel", "HB"],
+].map(([id, label, badge, alwaysAvailable = false]) => ({
+  id,
+  label,
+  badge,
+  alwaysAvailable,
+}));
 
-export const safeAppById = new Map(safeApps.map(app => [app.id, app]));
+export const safeAppById = new Map(safeApps.map((app) => [app.id, app]));
 
 const remoteButtons = [
   ["home", "HOME", "Home", "⌂", "navigation"],
@@ -37,32 +42,52 @@ const remoteButtons = [
   ["volume-down", "VOLUMEDOWN", "Leiser", "−", "volume"],
   ["volume-up", "VOLUMEUP", "Lauter", "+", "volume"],
   ["channel-down", "CHANNELDOWN", "Programm zurück", "P−", "channel"],
-  ["channel-up", "CHANNELUP", "Programm weiter", "P+", "channel"]
-].map(([id, command, label, icon, group]) => ({ id, command, label, icon, group }));
+  ["channel-up", "CHANNELUP", "Programm weiter", "P+", "channel"],
+].map(([id, command, label, icon, group]) => ({
+  id,
+  command,
+  label,
+  icon,
+  group,
+}));
 
-export const safeRemoteButtonById = new Map(remoteButtons.map(button => [button.id, button]));
+export const safeRemoteButtonById = new Map(
+  remoteButtons.map((button) => [button.id, button]),
+);
 
 export function allowedRemoteButtons() {
   return remoteButtons.map(({ command, ...button }) => button);
 }
 
 export function allowedApps(launchPoints = []) {
-  const installed = new Map(launchPoints.map(app => [app.id, app]));
-  return safeApps.flatMap(app => {
+  const installed = new Map(launchPoints.map((app) => [app.id, app]));
+  return safeApps.flatMap((app) => {
     const live = installed.get(app.id);
-    return live || app.alwaysAvailable ? [{ ...app, label: live?.title || app.label, alwaysAvailable: undefined }] : [];
+    return live || app.alwaysAvailable
+      ? [
+          {
+            ...app,
+            label: live?.title || app.label,
+            alwaysAvailable: undefined,
+          },
+        ]
+      : [];
   });
 }
 
 export function allowedInputs(devices = []) {
   return devices
-    .filter(input => /^HDMI_[1-4]$/.test(input.id) && /^com\.webos\.app\.hdmi[1-4]$/.test(input.appId))
-    .map(input => ({
+    .filter(
+      (input) =>
+        /^HDMI_[1-4]$/.test(input.id) &&
+        /^com\.webos\.app\.hdmi[1-4]$/.test(input.appId),
+    )
+    .map((input) => ({
       id: input.id,
       appId: input.appId,
       label: input.label || `HDMI ${input.port}`,
       port: input.port,
       active: Boolean(input.activate),
-      connected: input.connected !== false || Boolean(input.activate)
+      connected: input.connected !== false || Boolean(input.activate),
     }));
 }

@@ -22,7 +22,9 @@ export class HistoryStore {
   async write(entries) {
     await mkdir(dirname(this.path), { recursive: true });
     const temporary = `${this.path}.${process.pid}.tmp`;
-    await writeFile(temporary, `${JSON.stringify(entries, null, 2)}\n`, { mode: 0o600 });
+    await writeFile(temporary, `${JSON.stringify(entries, null, 2)}\n`, {
+      mode: 0o600,
+    });
     await rename(temporary, this.path);
   }
 
@@ -35,7 +37,7 @@ export class HistoryStore {
   async list(device, limit = 10) {
     await this.queue;
     const entries = await this.read();
-    return entries.filter(entry => entry.device === device).slice(0, limit);
+    return entries.filter((entry) => entry.device === device).slice(0, limit);
   }
 
   append(entry) {
@@ -45,7 +47,7 @@ export class HistoryStore {
         id: randomUUID(),
         at: new Date().toISOString(),
         undoneAt: null,
-        ...entry
+        ...entry,
       };
       entries.unshift(saved);
       await this.write(entries.slice(0, this.maxEntries));
@@ -54,13 +56,19 @@ export class HistoryStore {
   }
 
   async latestUndoable(device) {
-    return (await this.list(device, this.maxEntries)).find(entry => !entry.undoneAt) || null;
+    return (
+      (await this.list(device, this.maxEntries)).find(
+        (entry) => !entry.undoneAt,
+      ) || null
+    );
   }
 
   markUndone(device, id) {
     return this.serialize(async () => {
       const entries = await this.read();
-      const latest = entries.find(entry => entry.device === device && !entry.undoneAt);
+      const latest = entries.find(
+        (entry) => entry.device === device && !entry.undoneAt,
+      );
       if (!latest || latest.id !== id) return null;
       latest.undoneAt = new Date().toISOString();
       await this.write(entries);

@@ -11,8 +11,13 @@ test("preferences are persisted separately per device", async () => {
   const store = new PreferencesStore(path);
   await store.setFavorites("living-room", ["app:netflix", "input:HDMI_2"]);
   await store.setFavorites("bedroom", ["app:com.apple.appletv"]);
-  assert.deepEqual((await store.get("living-room")).favorites, ["app:netflix", "input:HDMI_2"]);
-  assert.deepEqual((await store.get("bedroom")).favorites, ["app:com.apple.appletv"]);
+  assert.deepEqual((await store.get("living-room")).favorites, [
+    "app:netflix",
+    "input:HDMI_2",
+  ]);
+  assert.deepEqual((await store.get("bedroom")).favorites, [
+    "app:com.apple.appletv",
+  ]);
   assert.equal((await readFile(path, "utf8")).includes("living-room"), true);
 });
 
@@ -21,5 +26,8 @@ test("an explicitly empty favorite list stays empty", async () => {
   const store = new PreferencesStore(join(directory, "preferences.json"));
   assert.equal((await store.get("living-room")).configured, false);
   await store.setFavorites("living-room", []);
-  assert.deepEqual(await store.get("living-room"), { favorites: [], configured: true });
+  assert.deepEqual(await store.get("living-room"), {
+    favorites: [],
+    configured: true,
+  });
 });
