@@ -1,0 +1,29 @@
+when:
+  - event: pull_request
+  - event: push
+    branch: main
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git:2.12.1@sha256:b8d2401997be68ec25d62bd753fe5d30236e029fe007a5e823177e0e485ae205
+    settings:
+      depth: 0
+      partial: false
+      lfs: false
+      recursive: false
+
+steps:
+  gitleaks:
+    image: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+    commands:
+      - gitleaks git --redact --log-opts="--full-history --diff-merges=first-parent HEAD" .
+
+  node:
+    image: node:24-bookworm-slim@sha256:873f586f3794f52281bd039bf02c048a0be08fde619338f9941bad1eb6b34530
+    commands:
+      - npm test
+
+  formatting:
+    image: ghcr.io/biomejs/biome:2.6.9@sha256:2809acfa55df93af76bc6b9484006fac20b96f475ef342cc21f5c9fd3ec00fd2
+    commands:
+      - biome format .
